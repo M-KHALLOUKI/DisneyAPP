@@ -1,15 +1,21 @@
 package com.example.disneyapp.presentation.list
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import androidx.navigation.fragment.findNavController
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.disneyapp.R
+import com.example.disneyapp.presentation.api.DisneyApi
+import com.example.disneyapp.presentation.api.DisneyResponse
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -37,14 +43,28 @@ class DisneyListFragment : Fragment() {
         recyclerView.apply {
             layoutManager = this@DisneyListFragment.layoutManager
             adapter = this@DisneyListFragment.adapter
-
         }
 
-        val disneList = arrayListOf<Disney>().apply {
-            add(Disney("Aladdin"))
-            add(Disney("Mickey"))
-            add(Disney("Donald"))
-        }
-        adapter.updateList(disneList)
+        val retrofit = Retrofit.Builder()
+                .baseUrl("https://api.disneyapi.dev")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+        val DisneyApi: DisneyApi= retrofit.create(DisneyApi::class.java)
+
+        DisneyApi.getDisneyList().enqueue(object: Callback<DisneyResponse>{
+            override fun onFailure(call: Call<DisneyResponse>, t: Throwable) {
+                TODO("Not yet implemented")
+            }
+
+            override fun onResponse(call: Call<DisneyResponse>, response: Response<DisneyResponse>) {
+                if (response.isSuccessful && response.body() != null){
+                    val disneyResponse = response.body()!!
+                    adapter.updateList(disneyResponse.data)
+
+                }
+            }
+
+        })
     }
 }
